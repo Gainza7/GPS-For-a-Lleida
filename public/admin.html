@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Subir sesión — Panel de rendimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #0A0E12; --surface: #131920; --surface-2: #1B2330; --surface-3: #232D3B; --line: #29323F;
+    --accent: #FF5A1F; --accent-dim: #B84420; --ok: #2FE3A6; --danger: #FF4757;
+    --text: #F2F4F1; --text-dim: #8A96A3; --text-faint: #4E5866;
+    --font-display: "Big Shoulders Display", sans-serif; --font-body: "Inter", sans-serif; --font-mono: "JetBrains Mono", monospace;
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body{ background: var(--bg); color: var(--text); font-family: var(--font-body); min-height:100vh; -webkit-font-smoothing: antialiased; }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1{ font-family: var(--font-display); font-weight:700; font-size:32px; margin-bottom: 6px; }
+  .sub{ color: var(--text-faint); font-family: var(--font-mono); font-size:12px; margin-bottom: 32px; }
+  .card{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:20px; }
+  label{ display:block; font-family: var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:8px; }
+  input[type=text], input[type=date], input[type=password]{
+    width:100%; background: var(--surface-2); border:1px solid var(--line); color: var(--text);
+    padding:12px 14px; border-radius:8px; font-family: var(--font-body); font-size:14px; margin-bottom:18px;
+  }
+  .drop{
+    border:2px dashed var(--line); border-radius:12px; padding:28px; text-align:center; cursor:pointer;
+    color: var(--text-dim); font-size:13px; margin-bottom:12px; transition: border-color .15s ease, background .15s ease;
+  }
+  .drop:hover, .drop.dragover{ border-color: var(--accent-dim); background: var(--surface-2); }
+  .drop .fname{ color: var(--accent); font-family: var(--font-mono); font-size:12px; margin-top:8px; }
+  .btn{
+    background: var(--accent); color:#fff; border:none; padding:14px 20px; border-radius:10px;
+    font-weight:600; font-size:14px; cursor:pointer; width:100%; transition: background .15s ease;
+  }
+  .btn:hover{ background: var(--accent-dim); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-secondary{ background: var(--surface-2); border:1px solid var(--line); color: var(--text); }
+  table{ width:100%; border-collapse: collapse; font-size:13px; margin-top: 10px; }
+  th, td{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
+  th{ font-family: var(--font-mono); font-size:10.5px; text-transform:uppercase; color: var(--text-faint); }
+  select{ background: var(--surface-2); color: var(--text); border:1px solid var(--line); border-radius:6px; padding:4px 6px; font-size:12px; }
+  .badge{ font-family: var(--font-mono); font-size:10px; padding:2px 8px; border-radius:20px; }
+  .badge.ok{ background: rgba(47,227,166,0.12); color: var(--ok); }
+  .badge.warn{ background: rgba(255,71,87,0.12); color: var(--danger); }
+  .msg{ font-family: var(--font-mono); font-size:12px; margin-top:14px; min-height:16px; }
+  .msg.ok{ color: var(--ok); }
+  .msg.err{ color: var(--danger); }
+  #loginScreen, #uploadScreen{ display:none; }
+  #loginScreen.active, #uploadScreen.active{ display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Subir sesión</h1>
+  <div class="sub">Panel interno de staff — no visible para los jugadores</div>
+
+  <div id="loginScreen" class="active">
+    <div class="card">
+      <label>Contraseña de staff</label>
+      <input type="password" id="adminPass" placeholder="••••••••" />
+      <button class="btn" id="loginBtn">Entrar</button>
+      <div class="msg err" id="loginMsg">&nbsp;</div>
+    </div>
+  </div>
+
+  <div id="uploadScreen">
+    <div class="card">
+      <label>Nombre de la sesión</label>
+      <input type="text" id="sessionName" placeholder="Ej: MD-3 vs Girona" />
+      <label>Fecha</label>
+      <input type="date" id="sessionDate" />
+
+      <label>Archivo de carga (Player Load / DSL) — obligatorio</label>
+      <div class="drop" id="dropLoad">Arrastra aquí el .xls con la hoja "Load", o pulsa para elegirlo
+        <div class="fname" id="fnameLoad"></div>
+      </div>
+      <input type="file" id="fileLoad" accept=".xls,.xlsx" style="display:none">
+
+      <label>Archivo de COI — opcional</label>
+      <div class="drop" id="dropCoi">Arrastra aquí el .xls con los cambios de dirección, o pulsa para elegirlo
+        <div class="fname" id="fnameCoi"></div>
+      </div>
+      <input type="file" id="fileCoi" accept=".xls,.xlsx" style="display:none">
+
+      <button class="btn btn-secondary" id="parseBtn" style="margin-top:10px;">Leer archivos</button>
+      <div class="msg" id="parseMsg">&nbsp;</div>
+    </div>
+
+    <div class="card" id="previewCard" style="display:none;">
+      <label>Vista previa — revisa que los jugadores estén bien emparejados</label>
+      <table id="previewTable"></table>
+      <button class="btn" id="saveBtn" style="margin-top:18px;">Guardar sesión</button>
+      <div class="msg" id="saveMsg">&nbsp;</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let adminToken = null;
+  let roster = [];
+  let parsedEntries = []; // {name, duration, movementLevel, muscularLoad, coiHI, matchedPlayerId}
+
+  function normalize(str){
+    return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const pass = document.getElementById('adminPass').value;
+    const msg = document.getElementById('loginMsg');
+    try{
+      const res = await fetch('/api/admin-login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok){ msg.textContent = data.error; return; }
+      adminToken = data.token;
+      document.getElementById('loginScreen').classList.remove('active');
+      document.getElementById('uploadScreen').classList.add('active');
+      const rosterRes = await fetch('/api/roster');
+      const rosterData = await rosterRes.json();
+      roster = rosterData.players || [];
+    } catch(e){
+      msg.textContent = 'Error de conexión';
+    }
+  });
+
+  let fileLoadData = null, fileCoiData = null;
+
+  function setupDrop(dropId, inputId, fnameId, onFile){
+    const drop = document.getElementById(dropId);
+    const input = document.getElementById(inputId);
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault(); drop.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    input.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+    function handleFile(file){
+      document.getElementById(fnameId).textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (ev) => onFile(new Uint8Array(ev.target.result));
+      reader.readAsArrayBuffer(file);
+    }
+  }
+  setupDrop('dropLoad', 'fileLoad', 'fnameLoad', (buf) => { fileLoadData = buf; });
+  setupDrop('dropCoi', 'fileCoi', 'fnameCoi', (buf) => { fileCoiData = buf; });
+
+  function findHeaderCol(headerRow, matchFn){
+    for (let i = 0; i < headerRow.length; i++){
+      if (headerRow[i] && matchFn(String(headerRow[i]))) return i;
+    }
+    return -1;
+  }
+
+  function parseLoadSheet(buf){
+    const wb = XLSX.read(buf, { type: 'array' });
+    let sheet = wb.Sheets['Load'] || wb.Sheets[wb.SheetNames.find(n => n.toLowerCase().includes('load'))] || wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: null });
+    const header = rows[0];
+    const colPlayer = 0;
+    const colDur = 1;
+    const colPL = findHeaderCol(header, h => h.includes('Player Load') && h.includes('a.u.') && !h.includes('min') && !h.includes('Horizontal') && !h.includes('Vertical') && !h.includes('Anteroposterior') && !h.includes('Medio'));
+    const colDSL = findHeaderCol(header, h => h.startsWith('DSL') && h.includes('a.u.') && !h.includes('min'));
+
+    let sessionRowIdx = rows.findIndex(r => r[0] === 'Session');
+    let start = sessionRowIdx >= 0 ? sessionRowIdx + 1 : 3;
+
+    const out = [];
+    for (let r = start; r < rows.length; r++){
+      const name = rows[r][colPlayer];
+      if (!name || typeof name !== 'string') break;
+      out.push({
+        name: name.trim(),
+        duration: String(rows[r][colDur] || ''),
+        movementLevel: parseFloat(rows[r][colPL]),
+        muscularLoad: parseFloat(rows[r][colDSL])
+      });
+    }
+    return out;
+  }
+
+  function parseCoiSheet(buf){
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: null });
+    const header = rows[0];
+    const cols = {
+      front: findHeaderCol(header, h => h === 'Front HI Coi'),
+      back: findHeaderCol(header, h => h === 'Back HI Coi'),
+      left: findHeaderCol(header, h => h === 'Left HI Coi'),
+      right: findHeaderCol(header, h => h === 'Right HI Coi'),
+      frontLeft: findHeaderCol(header, h => h === 'Front Left HI Coi'),
+      frontRight: findHeaderCol(header, h => h === 'Front Right HI Coi'),
+      backRight: findHeaderCol(header, h => h === 'Back Right HI Coi'),
+      backLeft: findHeaderCol(header, h => h === 'Back Left HI Coi'),
+    };
+    let sessionRowIdx = rows.findIndex(r => r[0] === 'Session');
+    let start = sessionRowIdx >= 0 ? sessionRowIdx + 1 : 3;
+
+    const out = {};
+    for (let r = start; r < rows.length; r++){
+      const name = rows[r][0];
+      if (!name || typeof name !== 'string') break;
+      const vals = {};
+      Object.keys(cols).forEach(k => {
+        const v = cols[k] >= 0 ? rows[r][cols[k]] : null;
+        vals[k] = (v === null || v === undefined || isNaN(v)) ? 0 : Number(v);
+      });
+      out[name.trim()] = vals;
+    }
+    return out;
+  }
+
+  document.getElementById('parseBtn').addEventListener('click', () => {
+    const parseMsg = document.getElementById('parseMsg');
+    if (!fileLoadData){ parseMsg.className = 'msg err'; parseMsg.textContent = 'Falta el archivo de carga (Player Load / DSL).'; return; }
+    if (!document.getElementById('sessionName').value || !document.getElementById('sessionDate').value){
+      parseMsg.className = 'msg err'; parseMsg.textContent = 'Rellena el nombre y la fecha de la sesión.'; return;
+    }
+    try{
+      const loadEntries = parseLoadSheet(fileLoadData);
+      const coiData = fileCoiData ? parseCoiSheet(fileCoiData) : {};
+
+      parsedEntries = loadEntries.map(e => {
+        const normName = normalize(e.name);
+        const match = roster.find(p => normalize(p.name) === normName);
+        return {
+          ...e,
+          coiHI: coiData[e.name] || null,
+          matchedPlayerId: match ? match.id : null,
+          matchedName: match ? match.name : null
+        };
+      });
+
+      renderPreview();
+      parseMsg.className = 'msg ok';
+      parseMsg.textContent = `${parsedEntries.length} jugadores leídos.`;
+      document.getElementById('previewCard').style.display = 'block';
+    } catch(e){
+      parseMsg.className = 'msg err';
+      parseMsg.textContent = 'No se pudo leer el archivo: ' + e.message;
+    }
+  });
+
+  function renderPreview(){
+    const table = document.getElementById('previewTable');
+    let html = '<tr><th>Nombre en el CSV</th><th>Jugador emparejado</th><th>Mov.</th><th>Carga</th><th>COI</th></tr>';
+    parsedEntries.forEach((e, idx) => {
+      const options = roster.map(p => `<option value="${p.id}" ${p.id === e.matchedPlayerId ? 'selected' : ''}>${p.name}</option>`).join('');
+      html += `<tr>
+        <td>${e.name}</td>
+        <td>
+          <select data-idx="${idx}" class="matchSelect">
+            <option value="">— Ignorar —</option>
+            ${options}
+          </select>
+          ${e.matchedPlayerId ? '<span class="badge ok">OK</span>' : '<span class="badge warn">Sin match</span>'}
+        </td>
+        <td>${isNaN(e.movementLevel) ? '—' : e.movementLevel.toFixed(1)}</td>
+        <td>${isNaN(e.muscularLoad) ? '—' : e.muscularLoad.toFixed(1)}</td>
+        <td>${e.coiHI ? 'Sí' : '—'}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+    document.querySelectorAll('.matchSelect').forEach(sel => {
+      sel.addEventListener('change', (ev) => {
+        const idx = Number(ev.target.dataset.idx);
+        parsedEntries[idx].matchedPlayerId = ev.target.value ? Number(ev.target.value) : null;
+      });
+    });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const saveMsg = document.getElementById('saveMsg');
+    const validEntries = parsedEntries.filter(e => e.matchedPlayerId && !isNaN(e.movementLevel) && !isNaN(e.muscularLoad));
+    if (validEntries.length === 0){
+      saveMsg.className = 'msg err'; saveMsg.textContent = 'No hay ningún jugador emparejado con datos válidos.'; return;
+    }
+    saveMsg.className = 'msg'; saveMsg.textContent = 'Guardando...';
+    try{
+      const res = await fetch('/api/admin-upload-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({
+          sessionName: document.getElementById('sessionName').value,
+          sessionDate: document.getElementById('sessionDate').value,
+          entries: validEntries.map(e => ({
+            playerId: e.matchedPlayerId,
+            duration: e.duration,
+            movementLevel: e.movementLevel,
+            muscularLoad: e.muscularLoad,
+            coiHI: e.coiHI
+          }))
+        })
+      });
+      const data = await res.json();
+      if (!res.ok){ saveMsg.className = 'msg err'; saveMsg.textContent = data.error; return; }
+      saveMsg.className = 'msg ok';
+      saveMsg.textContent = `Guardado: ${data.playersSaved} jugadores en la nueva sesión.`;
+    } catch(e){
+      saveMsg.className = 'msg err'; saveMsg.textContent = 'Error de conexión al guardar.';
+    }
+  });
+</script>
+</body>
+</html>
