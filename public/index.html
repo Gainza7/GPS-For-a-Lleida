@@ -1,30 +1,31 @@
+
 <!doctype html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Panel de rendimiento</title>
+<title>Panel de rendimiento — Ilerna Lleida</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0A0E12;
-    --surface: #131920;
-    --surface-2: #1B2330;
-    --surface-3: #232D3B;
-    --line: #29323F;
-    --accent: #FF5A1F;
-    --accent-dim: #B84420;
-    --accent-glow: rgba(255, 90, 31, 0.25);
+    --bg: #0C0A0D;
+    --surface: #17121A;
+    --surface-2: #201A24;
+    --surface-3: #2A222E;
+    --line: #342930;
+    --accent: #C11F63;
+    --accent-dim: #7A1042;
+    --accent-glow: rgba(193, 31, 99, 0.28);
     --team: #4DA6FF;
     --team-glow: rgba(77, 166, 255, 0.2);
     --personal: #A78BFA;
     --personal-glow: rgba(167, 139, 250, 0.2);
     --ok: #2FE3A6;
     --danger: #FF4757;
-    --text: #F2F4F1;
-    --text-dim: #8A96A3;
-    --text-faint: #4E5866;
+    --text: #F5F0F2;
+    --text-dim: #A89AA5;
+    --text-faint: #5C4F58;
     --font-display: "Big Shoulders Display", sans-serif;
     --font-body: "Inter", sans-serif;
     --font-mono: "JetBrains Mono", monospace;
@@ -33,8 +34,8 @@
   body{
     background: var(--bg);
     background-image:
-      radial-gradient(circle at 15% 0%, rgba(255,90,31,0.07), transparent 40%),
-      radial-gradient(circle at 85% 100%, rgba(47,227,166,0.05), transparent 40%);
+      radial-gradient(circle at 15% 0%, rgba(193,31,99,0.10), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(77,166,255,0.05), transparent 40%);
     color: var(--text);
     font-family: var(--font-body);
     min-height: 100vh;
@@ -45,7 +46,7 @@
   .screen.active{ display: block; }
 
   header{
-    display: flex; align-items: flex-end; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     gap: 24px; margin-bottom: 44px; padding-bottom: 24px;
     border-bottom: 1px solid var(--line); flex-wrap: wrap;
   }
@@ -57,6 +58,9 @@
   .eyebrow::before{ content:""; width:6px; height:6px; background:var(--accent); border-radius:50%; box-shadow:0 0 8px var(--accent); }
   h1{ font-family: var(--font-display); font-weight: 700; font-size: 42px; line-height: 1; letter-spacing: -0.01em; }
   h1 span{ color: var(--text-dim); font-weight: 600; }
+
+  .crest-block{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .crest-block img{ height: 64px; width: auto; filter: drop-shadow(0 4px 14px rgba(193,31,99,0.25)); }
   .session-info{ font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); text-align: right; line-height: 1.6; }
   .session-info b{ color: var(--text-dim); }
 
@@ -92,6 +96,22 @@
   .profile-head .name{ font-weight:700; font-size:22px; }
   .profile-head .role{ font-family: var(--font-mono); font-size:12px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; }
 
+  .tabs{ display:flex; gap:8px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tab{
+    font-family: var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--text-faint); background:none; border:none; padding: 10px 4px; margin-right: 20px;
+    cursor:pointer; border-bottom: 2px solid transparent; transition: color .15s ease, border-color .15s ease;
+  }
+  .tab:hover{ color: var(--text-dim); }
+  .tab.active{ color: var(--accent); border-bottom-color: var(--accent); }
+
+  .week-select-row{ display:flex; align-items:center; gap:10px; margin-bottom: 20px; }
+  .week-label{ font-family: var(--font-mono); font-size:11px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.06em; }
+  .week-select{
+    background: var(--surface-2); border:1px solid var(--line); color: var(--text);
+    font-family: var(--font-mono); font-size:12px; padding: 8px 12px; border-radius:8px; cursor:pointer;
+  }
+
   .sessions-list{ display:flex; flex-direction:column; gap:10px; }
   .session-row{
     background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
@@ -108,9 +128,9 @@
     background: var(--surface-2); border:1px solid var(--line); padding:5px 12px; border-radius:20px; margin-bottom:20px;
   }
 
-  .legend{ display:flex; gap:18px; margin-bottom: 20px; flex-wrap: wrap; }
-  .legend-item{ display:flex; align-items:center; gap:7px; font-family: var(--font-mono); font-size:11px; color: var(--text-dim); }
-  .legend-dot{ width:10px; height:10px; border-radius:3px; }
+  .mini-legend{ display:flex; gap:16px; margin-bottom: 16px; }
+  .mini-legend .legend-item{ display:flex; align-items:center; gap:6px; font-family: var(--font-mono); font-size:10.5px; color: var(--text-dim); }
+  .mini-legend .legend-dot{ width:9px; height:9px; border-radius:3px; }
 
   .metrics-stack{ display:flex; flex-direction:column; gap:16px; }
   .metric-card{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px; }
@@ -131,27 +151,9 @@
   .bar-fill.team{ background: linear-gradient(90deg, #2C5C82, var(--team)); box-shadow: 0 0 10px var(--team-glow); }
   .bar-fill.personal{ background: linear-gradient(90deg, #6C4FCC, var(--personal)); box-shadow: 0 0 10px var(--personal-glow); }
 
-  .mini-legend{ display:flex; gap:16px; margin-bottom: 16px; }
-  .mini-legend .legend-item{ display:flex; align-items:center; gap:6px; font-family: var(--font-mono); font-size:10.5px; color: var(--text-dim); }
-  .mini-legend .legend-dot{ width:9px; height:9px; border-radius:3px; }
-
   .no-data{ font-family: var(--font-mono); font-size:12px; color: var(--text-faint); text-align:center; padding: 20px 0; }
-
-  .tabs{ display:flex; gap:8px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
-  .tab{
-    font-family: var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:.06em;
-    color: var(--text-faint); background:none; border:none; padding: 10px 4px; margin-right: 20px;
-    cursor:pointer; border-bottom: 2px solid transparent; transition: color .15s ease, border-color .15s ease;
-  }
-  .tab:hover{ color: var(--text-dim); }
-  .tab.active{ color: var(--accent); border-bottom-color: var(--accent); }
-
-  .week-select-row{ display:flex; align-items:center; gap:10px; margin-bottom: 20px; }
-  .week-label{ font-family: var(--font-mono); font-size:11px; color: var(--text-faint); text-transform:uppercase; letter-spacing:.06em; }
-  .week-select{
-    background: var(--surface-2); border:1px solid var(--line); color: var(--text);
-    font-family: var(--font-mono); font-size:12px; padding: 8px 12px; border-radius:8px; cursor:pointer;
-  }
+  .compass-wrap{ display:flex; justify-content:center; padding: 10px 0 4px; }
+  .compass-labels{ font-family: var(--font-mono); font-size: 9px; fill: var(--text-faint); text-transform: uppercase; }
 
   .week-bars{ display:flex; align-items:flex-end; gap:10px; height: 140px; padding: 0 4px; }
   .week-bar-col{ display:flex; flex-direction:column; align-items:center; justify-content:flex-end; flex:1; height:100%; gap:6px; }
@@ -161,18 +163,7 @@
   .week-bar-val{ font-family: var(--font-mono); font-size:9.5px; color: var(--text-dim); }
   .week-bar-day{ font-family: var(--font-mono); font-size:9.5px; color: var(--text-faint); text-transform:uppercase; margin-top: 2px; }
 
-  .compass-wrap{ display:flex; justify-content:center; padding: 10px 0 4px; }
-  .compass-labels{ font-family: var(--font-mono); font-size: 9px; fill: var(--text-faint); text-transform: uppercase; }
-
-  @media (max-width: 720px){
-    .grid{ grid-template-columns: repeat(2, 1fr); }
-    h1{ font-size: 32px; }
-    header{ flex-direction: column; align-items: flex-start; }
-    .session-info{ text-align: left; }
-  }
-
-  /* Modal PIN */
-  .overlay{ position: fixed; inset: 0; background: rgba(6,8,10,0.75); backdrop-filter: blur(6px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity .2s ease; z-index:50; padding:20px; }
+  .overlay{ position: fixed; inset: 0; background: rgba(6,4,6,0.8); backdrop-filter: blur(6px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity .2s ease; z-index:50; padding:20px; }
   .overlay.active{ opacity:1; pointer-events:all; }
   .modal{ background: var(--surface); border:1px solid var(--line); border-radius:18px; width:100%; max-width:340px; padding:32px 28px 28px; text-align:center; transform: translateY(12px) scale(.98); transition: transform .2s ease; position:relative; }
   .overlay.active .modal{ transform: translateY(0) scale(1); }
@@ -195,26 +186,35 @@
   .key.ghost{ background:transparent; border-color:transparent; color: var(--text-faint); font-size:13px; font-family: var(--font-body); }
   .key.ghost:hover{ color: var(--text); background:transparent; }
   .status-msg{ font-family: var(--font-mono); font-size:11px; min-height:16px; margin-top:16px; color: var(--danger); }
+
+  @media (max-width: 720px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+    h1{ font-size: 32px; }
+    header{ flex-direction: column; align-items: flex-start; }
+    .crest-block{ align-items:flex-start; flex-direction: row-reverse; align-self: stretch; justify-content: space-between; width: 100%; }
+    .session-info{ text-align: left; }
+  }
 </style>
 </head>
 <body>
 
 <div class="wrap">
 
-  <!-- HOME -->
   <div class="screen active" id="screen-home">
     <header>
       <div>
         <div class="eyebrow">Acceso jugadores</div>
         <h1>Panel de <span>rendimiento</span></h1>
       </div>
-      <div class="session-info">Temporada <b>2025/26</b></div>
+      <div class="crest-block">
+        <img src="/logo.png" alt="Ilerna Lleida" />
+        <div class="session-info">Temporada <b>2025/26</b></div>
+      </div>
     </header>
     <div class="grid" id="grid"></div>
     <footer>Toca tu casilla e introduce tu PIN · Datos privados por jugador</footer>
   </div>
 
-  <!-- PROFILE -->
   <div class="screen" id="screen-profile">
     <button class="back-btn" id="backToHome">&larr; Volver</button>
     <div class="profile-head">
@@ -243,14 +243,11 @@
     </div>
   </div>
 
-
-  <!-- METRICS -->
   <div class="screen" id="screen-metrics">
     <button class="back-btn" id="backToProfile">&larr; Volver a sesiones</button>
     <div class="duration-pill" id="mDuration">Duración: --</div>
 
     <div class="metrics-stack">
-
       <div class="metric-card">
         <div class="mhead">
           <div class="label">Nivel de Movimiento</div>
@@ -295,20 +292,16 @@
       </div>
 
       <div class="metric-card">
-        <div class="mhead">
-          <div class="label">Cambios de Dirección</div>
-        </div>
+        <div class="mhead"><div class="label">Cambios de Dirección</div></div>
         <div id="coiWrap">
           <div class="compass-wrap"><svg id="coiSvg" width="320" height="320" viewBox="0 0 320 320"></svg></div>
         </div>
       </div>
-
     </div>
   </div>
 
 </div>
 
-<!-- MODAL PIN -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <button class="close" id="closeBtn">&times;</button>
@@ -327,12 +320,12 @@
 </div>
 
 <script>
-  const API = ""; // mismo dominio en Vercel
+  const API = "";
 
   let roster = [];
   let currentPlayer = null;
   let currentToken = null;
-  let meData = null; // { player, mySessions, teamAverages }
+  let meData = null;
   let entered = "";
 
   async function loadRoster(){
@@ -535,10 +528,10 @@
     const ns = "http://www.w3.org/2000/svg";
     function el(tag, attrs){ const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
 
-    [0.33, 0.66, 1].forEach(f => svgEl.appendChild(el('circle', { cx, cy, r: maxLen*f, fill:'none', stroke:'#212a35', 'stroke-width':1 })));
+    [0.33, 0.66, 1].forEach(f => svgEl.appendChild(el('circle', { cx, cy, r: maxLen*f, fill:'none', stroke:'#2a222c', 'stroke-width':1 })));
     coiDirections.forEach(d => {
       const rad = d.angle * Math.PI/180;
-      svgEl.appendChild(el('line', { x1:cx, y1:cy, x2:cx+Math.cos(rad)*maxLen, y2:cy+Math.sin(rad)*maxLen, stroke:'#212a35', 'stroke-width':1 }));
+      svgEl.appendChild(el('line', { x1:cx, y1:cy, x2:cx+Math.cos(rad)*maxLen, y2:cy+Math.sin(rad)*maxLen, stroke:'#2a222c', 'stroke-width':1 }));
     });
     coiDirections.forEach(d => {
       const val = coiHI[d.key] || 0;
@@ -547,7 +540,7 @@
       svgEl.appendChild(el('line', { x1:cx, y1:cy, x2:cx+Math.cos(rad)*len, y2:cy+Math.sin(rad)*len, stroke:'var(--accent)', 'stroke-width':14, 'stroke-linecap':'round', opacity: val===0?0.15:0.9 }));
       const lx = cx+Math.cos(rad)*(maxLen+26), ly = cy+Math.sin(rad)*(maxLen+26);
       const label = el('text', { x:lx, y:ly-4, 'text-anchor':'middle', class:'compass-labels' }); label.textContent = d.label; svgEl.appendChild(label);
-      const valText = el('text', { x:lx, y:ly+9, 'text-anchor':'middle', fill:'#F2F4F1', 'font-family':'JetBrains Mono', 'font-size':13, 'font-weight':700 }); valText.textContent = val; svgEl.appendChild(valText);
+      const valText = el('text', { x:lx, y:ly+9, 'text-anchor':'middle', fill:'#F5F0F2', 'font-family':'JetBrains Mono', 'font-size':13, 'font-weight':700 }); valText.textContent = val; svgEl.appendChild(valText);
     });
     svgEl.appendChild(el('circle', { cx, cy, r:4, fill:'var(--accent)' }));
   }
@@ -587,7 +580,6 @@
   }
   document.getElementById('backToProfile').addEventListener('click', () => openProfile());
 
-  // ---- Resumen semanal ----
   const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 
   function getISOWeekInfo(dateStr){
@@ -692,6 +684,5 @@
 
   loadRoster();
 </script>
-
 </body>
 </html>
