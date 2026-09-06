@@ -171,16 +171,26 @@
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: null });
     const header = rows[0];
-    const cols = {
-      front: findHeaderCol(header, h => h === 'Front HI Coi'),
-      back: findHeaderCol(header, h => h === 'Back HI Coi'),
-      left: findHeaderCol(header, h => h === 'Left HI Coi'),
-      right: findHeaderCol(header, h => h === 'Right HI Coi'),
-      frontLeft: findHeaderCol(header, h => h === 'Front Left HI Coi'),
-      frontRight: findHeaderCol(header, h => h === 'Front Right HI Coi'),
-      backRight: findHeaderCol(header, h => h === 'Back Right HI Coi'),
-      backLeft: findHeaderCol(header, h => h === 'Back Left HI Coi'),
-    };
+    const colsNormal = {
+  front: findHeaderCol(header, h => h === 'Frontal Coi'),
+  back: findHeaderCol(header, h => h === 'Back Coi'),
+  left: findHeaderCol(header, h => h === 'Left Coi'),
+  right: findHeaderCol(header, h => h === 'Right Coi'),
+  frontLeft: findHeaderCol(header, h => h === 'Front Left Coi'),
+  frontRight: findHeaderCol(header, h => h === 'Front Right Coi'),
+  backRight: findHeaderCol(header, h => h === 'Back Right Coi'),
+  backLeft: findHeaderCol(header, h => h === 'Back Left Coi'),
+};
+const colsHI = {
+  front: findHeaderCol(header, h => h === 'Front HI Coi'),
+  back: findHeaderCol(header, h => h === 'Back HI Coi'),
+  left: findHeaderCol(header, h => h === 'Left HI Coi'),
+  right: findHeaderCol(header, h => h === 'Right HI Coi'),
+  frontLeft: findHeaderCol(header, h => h === 'Front Left HI Coi'),
+  frontRight: findHeaderCol(header, h => h === 'Front Right HI Coi'),
+  backRight: findHeaderCol(header, h => h === 'Back Right HI Coi'),
+  backLeft: findHeaderCol(header, h => h === 'Back Left HI Coi'),
+};
     let sessionRowIdx = rows.findIndex(r => r[0] === 'Session');
     let start = sessionRowIdx >= 0 ? sessionRowIdx + 1 : 3;
 
