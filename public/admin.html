@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="es">
 <head>
@@ -21,7 +22,7 @@
   .sub{ color: var(--text-faint); font-family: var(--font-mono); font-size:12px; margin-bottom: 32px; }
   .card{ background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:20px; }
   label{ display:block; font-family: var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom:8px; }
-  input[type=text], input[type=date], input[type=password]{
+  input[type=text], input[type=date]{
     width:100%; background: var(--surface-2); border:1px solid var(--line); color: var(--text);
     padding:12px 14px; border-radius:8px; font-family: var(--font-body); font-size:14px; margin-bottom:18px;
   }
@@ -48,8 +49,6 @@
   .msg{ font-family: var(--font-mono); font-size:12px; margin-top:14px; min-height:16px; }
   .msg.ok{ color: var(--ok); }
   .msg.err{ color: var(--danger); }
-  #loginScreen, #uploadScreen{ display:none; }
-  #loginScreen.active, #uploadScreen.active{ display:block; }
 </style>
 </head>
 <body>
@@ -57,76 +56,58 @@
   <h1>Subir sesión</h1>
   <div class="sub">Panel interno de staff — no visible para los jugadores</div>
 
-  <div id="loginScreen" class="active">
-    <div class="card">
-      <label>Contraseña de staff</label>
-      <input type="password" id="adminPass" placeholder="••••••••" />
-      <button class="btn" id="loginBtn">Entrar</button>
-      <div class="msg err" id="loginMsg">&nbsp;</div>
+  <div class="card">
+    <label>Nombre de la sesión</label>
+    <input type="text" id="sessionName" placeholder="Ej: MD-3 vs Girona" />
+    <label>Fecha</label>
+    <input type="date" id="sessionDate" />
+
+    <label>Archivo de carga (Player Load / DSL) — obligatorio</label>
+    <div class="drop" id="dropLoad">Arrastra aquí el .xls con la hoja "Load", o pulsa para elegirlo
+      <div class="fname" id="fnameLoad"></div>
     </div>
+    <input type="file" id="fileLoad" accept=".xls,.xlsx" style="display:none">
+
+    <label>Archivo de COI — opcional</label>
+    <div class="drop" id="dropCoi">Arrastra aquí el .xls con los cambios de dirección, o pulsa para elegirlo
+      <div class="fname" id="fnameCoi"></div>
+    </div>
+    <input type="file" id="fileCoi" accept=".xls,.xlsx" style="display:none">
+
+    <button class="btn btn-secondary" id="parseBtn" style="margin-top:10px;">Leer archivos</button>
+    <div class="msg" id="parseMsg">&nbsp;</div>
   </div>
 
-  <div id="uploadScreen">
-    <div class="card">
-      <label>Nombre de la sesión</label>
-      <input type="text" id="sessionName" placeholder="Ej: MD-3 vs Girona" />
-      <label>Fecha</label>
-      <input type="date" id="sessionDate" />
-
-      <label>Archivo de carga (Player Load / DSL) — obligatorio</label>
-      <div class="drop" id="dropLoad">Arrastra aquí el .xls con la hoja "Load", o pulsa para elegirlo
-        <div class="fname" id="fnameLoad"></div>
-      </div>
-      <input type="file" id="fileLoad" accept=".xls,.xlsx" style="display:none">
-
-      <label>Archivo de COI — opcional</label>
-      <div class="drop" id="dropCoi">Arrastra aquí el .xls con los cambios de dirección, o pulsa para elegirlo
-        <div class="fname" id="fnameCoi"></div>
-      </div>
-      <input type="file" id="fileCoi" accept=".xls,.xlsx" style="display:none">
-
-      <button class="btn btn-secondary" id="parseBtn" style="margin-top:10px;">Leer archivos</button>
-      <div class="msg" id="parseMsg">&nbsp;</div>
-    </div>
-
-    <div class="card" id="previewCard" style="display:none;">
-      <label>Vista previa — revisa que los jugadores estén bien emparejados</label>
-      <table id="previewTable"></table>
-      <button class="btn" id="saveBtn" style="margin-top:18px;">Guardar sesión</button>
-      <div class="msg" id="saveMsg">&nbsp;</div>
-    </div>
+  <div class="card" id="previewCard" style="display:none;">
+    <label>Vista previa — revisa que los jugadores estén bien emparejados</label>
+    <table id="previewTable"></table>
+    <button class="btn" id="saveBtn" style="margin-top:18px;">Guardar sesión</button>
+    <div class="msg" id="saveMsg">&nbsp;</div>
   </div>
 </div>
 
 <script>
   let adminToken = null;
   let roster = [];
-  let parsedEntries = []; // {name, duration, movementLevel, muscularLoad, coiHI, matchedPlayerId}
+  let parsedEntries = [];
 
   function normalize(str){
     return (str || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
-  document.getElementById('loginBtn').addEventListener('click', async () => {
-    const pass = document.getElementById('adminPass').value;
-    const msg = document.getElementById('loginMsg');
+  async function initAdmin(){
     try{
-      const res = await fetch('/api/admin-login', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ password: pass })
-      });
+      const res = await fetch('/api/admin-login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
       const data = await res.json();
-      if (!res.ok){ msg.textContent = data.error; return; }
       adminToken = data.token;
-      document.getElementById('loginScreen').classList.remove('active');
-      document.getElementById('uploadScreen').classList.add('active');
       const rosterRes = await fetch('/api/roster');
       const rosterData = await rosterRes.json();
       roster = rosterData.players || [];
     } catch(e){
-      msg.textContent = 'Error de conexión';
+      document.getElementById('parseMsg').className = 'msg err';
+      document.getElementById('parseMsg').textContent = 'No se pudo conectar con el servidor.';
     }
-  });
+  }
 
   let fileLoadData = null, fileCoiData = null;
 
@@ -307,6 +288,8 @@
       saveMsg.className = 'msg err'; saveMsg.textContent = 'Error de conexión al guardar.';
     }
   });
+
+  initAdmin();
 </script>
 </body>
 </html>
