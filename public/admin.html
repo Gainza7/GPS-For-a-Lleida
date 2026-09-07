@@ -172,25 +172,25 @@
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: null });
     const header = rows[0];
     const colsNormal = {
-  front: findHeaderCol(header, h => h === 'Frontal Coi'),
-  back: findHeaderCol(header, h => h === 'Back Coi'),
-  left: findHeaderCol(header, h => h === 'Left Coi'),
-  right: findHeaderCol(header, h => h === 'Right Coi'),
-  frontLeft: findHeaderCol(header, h => h === 'Front Left Coi'),
-  frontRight: findHeaderCol(header, h => h === 'Front Right Coi'),
-  backRight: findHeaderCol(header, h => h === 'Back Right Coi'),
-  backLeft: findHeaderCol(header, h => h === 'Back Left Coi'),
-};
-const colsHI = {
-  front: findHeaderCol(header, h => h === 'Front HI Coi'),
-  back: findHeaderCol(header, h => h === 'Back HI Coi'),
-  left: findHeaderCol(header, h => h === 'Left HI Coi'),
-  right: findHeaderCol(header, h => h === 'Right HI Coi'),
-  frontLeft: findHeaderCol(header, h => h === 'Front Left HI Coi'),
-  frontRight: findHeaderCol(header, h => h === 'Front Right HI Coi'),
-  backRight: findHeaderCol(header, h => h === 'Back Right HI Coi'),
-  backLeft: findHeaderCol(header, h => h === 'Back Left HI Coi'),
-};
+      front: findHeaderCol(header, h => h === 'Frontal Coi'),
+      back: findHeaderCol(header, h => h === 'Back Coi'),
+      left: findHeaderCol(header, h => h === 'Left Coi'),
+      right: findHeaderCol(header, h => h === 'Right Coi'),
+      frontLeft: findHeaderCol(header, h => h === 'Front Left Coi'),
+      frontRight: findHeaderCol(header, h => h === 'Front Right Coi'),
+      backRight: findHeaderCol(header, h => h === 'Back Right Coi'),
+      backLeft: findHeaderCol(header, h => h === 'Back Left Coi'),
+    };
+    const colsHI = {
+      front: findHeaderCol(header, h => h === 'Front HI Coi'),
+      back: findHeaderCol(header, h => h === 'Back HI Coi'),
+      left: findHeaderCol(header, h => h === 'Left HI Coi'),
+      right: findHeaderCol(header, h => h === 'Right HI Coi'),
+      frontLeft: findHeaderCol(header, h => h === 'Front Left HI Coi'),
+      frontRight: findHeaderCol(header, h => h === 'Front Right HI Coi'),
+      backRight: findHeaderCol(header, h => h === 'Back Right HI Coi'),
+      backLeft: findHeaderCol(header, h => h === 'Back Left HI Coi'),
+    };
     let sessionRowIdx = rows.findIndex(r => r[0] === 'Session');
     let start = sessionRowIdx >= 0 ? sessionRowIdx + 1 : 3;
 
@@ -199,9 +199,12 @@ const colsHI = {
       const name = rows[r][0];
       if (!name || typeof name !== 'string') break;
       const vals = {};
-      Object.keys(cols).forEach(k => {
-        const v = cols[k] >= 0 ? rows[r][cols[k]] : null;
-        vals[k] = (v === null || v === undefined || isNaN(v)) ? 0 : Number(v);
+      Object.keys(colsNormal).forEach(k => {
+        const vNorm = colsNormal[k] >= 0 ? rows[r][colsNormal[k]] : null;
+        const vHI = colsHI[k] >= 0 ? rows[r][colsHI[k]] : null;
+        const normNum = (vNorm === null || vNorm === undefined || isNaN(vNorm)) ? 0 : Number(vNorm);
+        const hiNum = (vHI === null || vHI === undefined || isNaN(vHI)) ? 0 : Number(vHI);
+        vals[k] = normNum + hiNum;
       });
       out[name.trim()] = vals;
     }
